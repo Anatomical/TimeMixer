@@ -201,3 +201,8 @@ python -u run.py --task_name long_term_forecast --is_training 1 --root_path ./da
 > For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
 > Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
 > ```
+
+## 基于ETTm1在本机上使用自定义数据集
+
+
+
