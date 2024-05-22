@@ -142,6 +142,10 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 if 'PEMS' == self.args.data or 'Solar' == self.args.data:
                     batch_x_mark = None
                     batch_y_mark = None
+                    
+                # ? Phenological data do not have a time series of output variables (may cause an error in the model)
+                if 'RicePhen' == self.args.data:
+                    batch_y_mark = None
 
                 if self.args.down_sampling_layers == 0:
                     dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()

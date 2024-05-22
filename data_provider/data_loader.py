@@ -918,6 +918,7 @@ class Dataset_RicePhen():
             pass
         
         df_stamp = df_raw_ts[['date']][border1*365:border2*365]
+        df_stamp['date'] = pd.to_datetime(df_stamp.date)
         if self.timeenc == 0:
             df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
             df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
@@ -925,7 +926,7 @@ class Dataset_RicePhen():
             df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
             data_stamp = df_stamp.drop(['date'], 1).values
         elif self.timeenc == 1:
-            data_stamp = time_features(df_stamp['date'], freq=self.freq)
+            data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
             data_stamp = data_stamp.transpose(1, 0)
         
         self.data_x = data_ts[border1:border2]
@@ -936,8 +937,8 @@ class Dataset_RicePhen():
         seq_x = self.data_x[index]
         seq_y = self.data_y[index]
         seq_x_mark = self.data_stamp[index]
-        
-        return seq_x, seq_y, seq_x_mark
+        seq_y_mark = np.zeros(seq_y.shape)
+        return seq_x, seq_y, seq_x_mark, seq_y_mark
     
     def __len__(self):
         return len(self.data_x)
