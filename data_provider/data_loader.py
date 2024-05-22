@@ -832,3 +832,122 @@ class Dataset_Solar(Dataset):
 
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
+
+
+class Dataset_RicePhen():
+    # data_path: Instead of a data path, use the rice type
+    # target: Instead of a target, use the rice phenology
+    # freq: use daily frequency
+    def __init__(self, root_path, flag='train', size=None,
+                 features='M', data_path='Rice(LR)',
+                 target='TR,HE,MA', scale=True, timeenc=0, freq='d', seasonal_patterns=None):
+        # size [seq_len, label_len, pred_len]
+        # info
+        if size == None:
+            raise ValueError("size must be specified")
+        else:
+            self.seq_len = size[0]
+            self.label_len = size[1]
+            self.pred_len = size[2]
+        # init
+        assert flag in ['train', 'test', 'val']
+        type_map = {'train': 0, 'val': 1, 'test': 2}
+        self.set_type = type_map[flag]
+        
+        self.features = features
+        self.target = target
+        self.scale = scale
+        self.timeenc = timeenc
+        self.freq = freq
+
+        self.root_path = root_path
+        # Two files are included and need to be processed separately
+        ts_data_name = f'HRLT_{data_path}_2000-2019.csv'
+        # ! The target data is not a time series
+        target_data_name = f'CHN_{data_path}_2000-2019.csv'
+        self.data_path = {'ts_data': ts_data_name, 'target_data': target_data_name}
+        self.__read_data__()
+    
+    # This data is sequence to event, not sequence to sequence, so it needs to be modified when reading the data.
+    def __read_data__(self):
+        self.scaler = StandardScaler()
+        df_raw_ts = pd.read_csv(os.path.join(self.root_path,
+                                          self.data_path['ts_data']))
+        df_raw_target = pd.read_csv(os.path.join(self.root_path,
+                                            self.data_path['target_data']))
+        '''
+        df_raw_ts.columns: ['year', 'lat', 'lon', 'time', 'maxtmp', 'mintmp', 'prep', ...(other features)]
+        df_raw_target.columns: ['year', 'lat', 'lon', 'time', 'TR', 'HE', 'MA']
+        '''
+        df_raw_ts = df_raw_ts.rename(columns={'time': 'date'})
+        df_raw_ts['date'] = pd.to_datetime(df_raw_ts['date'])
+        # Filter out the data for February 29th
+        df_raw_ts = df_raw_ts[~((df_raw_ts['date'].dt.month == 2) & (df_raw_ts['date'].dt.day == 29))]
+        
+        # The number of sample points is the number of rows of df raw target
+        num_train = int(len(df_raw_target) * 0.7)
+        num_test = int(len(df_raw_target) * 0.2)
+        num_vali = len(df_raw_target) - num_train - num_test
+        # The prediction of phenological indicators only requires the time-series variables of the current year,
+        # not the historical ones. So seq_len is not needed.
+        border1s = [0, num_train, len(df_raw_target) - num_test]
+        border2s = [num_train, num_train + num_vali, len(df_raw_target)]
+        border1 = border1s[self.set_type]
+        border2 = border2s[self.set_type]
+        
+        # My data does not depend on the feature parameter.
+        # I'm using multiple time series variables (maxtmp', 'mintmp', 'prep', ...) to predict multiple outcomes ('TR', 'HE', 'MA')
+        # delete the columns that are not needed
+        data_ts = df_raw_ts.drop(columns=['year', 'lat', 'lon', 'date'], axis=1).values
+        data_target = df_raw_target.drop(columns=['year', 'lat', 'lon'], axis=1).values
+        
+        feature_dim = data_ts.shape[1]
+        data_ts = data_ts.reshape(-1, 365, feature_dim)
+        target_dim = data_target.shape[1]
+        data_target = data_target.reshape(-1, target_dim)
+        
+        # Only the input features are normalized, not the target variable (output)
+        if self.scale:
+            # Normalization is performed on the training set only
+            train_data_ts = data_ts[:num_train].reshape(-1, feature_dim)
+            self.scaler.fit(train_data_ts)
+            # The entire dataset is transformed
+            data_ts = self.scaler.transform(data_ts.reshape(-1, feature_dim)).reshape(-1, 365, feature_dim)
+        else:
+            # data_ts = data_ts
+            pass
+        
+        df_stamp = df_raw_ts[['date']][border1*365:border2*365]
+        if self.timeenc == 0:
+            df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
+            df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
+            df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
+            df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
+            data_stamp = df_stamp.drop(['date'], 1).values
+        elif self.timeenc == 1:
+            data_stamp = time_features(df_stamp['date'], freq=self.freq)
+            data_stamp = data_stamp.transpose(1, 0)
+        
+        self.data_x = data_ts[border1:border2]
+        self.data_y = data_target[border1:border2]
+        self.data_stamp = data_stamp.reshape(-1, 365, data_stamp.shape[1])
+    
+    def __getitem__(self, index):
+        seq_x = self.data_x[index]
+        seq_y = self.data_y[index]
+        seq_x_mark = self.data_stamp[index]
+        
+        return seq_x, seq_y, seq_x_mark
+    
+    def __len__(self):
+        return len(self.data_x)
+    
+    # Used for visualization, drawing curves
+    def inverse_transform(self, data):
+        return self.scaler.inverse_transform(data)
+           
+        
+# todo
+class Dataset_RiceYield():
+    
+    pass
