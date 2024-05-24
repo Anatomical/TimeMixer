@@ -248,7 +248,11 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 if 'PEMS' == self.args.data or 'Solar' == self.args.data:
                     batch_x_mark = None
                     batch_y_mark = None
-
+                
+                # ? Phenological data do not have a time series of output variables (may cause an error in the model)
+                if 'RicePhen' == self.args.data:
+                    batch_y_mark = None
+                
                 if self.args.down_sampling_layers == 0:
                     dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
                     dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
@@ -279,6 +283,10 @@ class Exp_Long_Term_Forecast(Exp_Basic):
 
                 preds.append(pred)
                 trues.append(true)
+                
+                # * if the data is RicePhen, the data is not a time series of output variables
+                if self.args.data == 'RicePhen':
+                    continue
                 if i % 20 == 0:
                     input = batch_x.detach().cpu().numpy()
                     if test_data.scale and self.args.inverse:
@@ -291,8 +299,12 @@ class Exp_Long_Term_Forecast(Exp_Basic):
         preds = np.array(preds)
         trues = np.array(trues)
         print('test shape:', preds.shape, trues.shape)
-        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-        trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
+        if self.args.data == 'RicePhen':
+            preds = np.squeeze(preds, axis=2)
+            trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
+        else:
+            preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
+            trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
         print('test shape:', preds.shape, trues.shape)
 
         if self.args.data == 'PEMS':

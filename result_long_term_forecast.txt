@@ -10,3 +10,12 @@ mse:0.375461220741272, mae:0.4003911018371582
 long_term_forecast_ETTh1_96_96_none_TimeMixer_ETTh1_sl96_pl96_dm16_nh4_el2_dl1_df32_fc1_ebtimeF_dtTrue_Exp_0  
 mse:0.375461220741272, mae:0.4003911018371582
 
+long_term_forecast_RicePhen_Rice(LR)_none_PhenTimeMixer_RicePhen_sl365_pl1_dm16_nh4_el2_dl1_df32_fc1_ebtimeF_dtTrue_Exp_0  
+mse:7057.119140625, mae:68.09548950195312
+
+long_term_forecast_RicePhen_Rice(LR)_none_PhenTimeMixer_RicePhen_sl365_pl1_dm16_nh4_el2_dl1_df32_fc1_ebtimeF_dtTrue_Exp_0  
+mse:6050.68408203125, mae:63.14724349975586
+
+long_term_forecast_RicePhen_Rice(LR)_none_PhenTimeMixer_RicePhen_sl365_pl1_dm32_nh4_el3_dl1_df64_fc1_ebtimeF_dtTrue_Exp_0  
+mse:3977.8037109375, mae:51.669593811035156
+

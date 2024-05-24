@@ -60,18 +60,18 @@
                 "--freq", "d", //新增
                 "--seq_len", "365", //暂定
                 "--label_len", "3", //暂定
-                "--pred_len", "3", //暂定
-                "--e_layers", "2",
+                "--pred_len", "1", //暂定
+                "--e_layers", "3", // 增加编码层数
                 "--enc_in", "3",
                 "--c_out", "3",
                 "--des", "Exp",
                 "--itr", "1",
-                "--d_model", "16",
-                "--d_ff", "32",
-                "--learning_rate", "0.01",
-                "--train_epochs", "10",
+                "--d_model", "32", // 增大模型维度
+                "--d_ff", "64", // 增大前馈网络维度
+                "--learning_rate", "0.001", // 减小学习率
+                "--train_epochs", "50", // 增加训练次数
                 "--patience", "10",
-                "--batch_size", "1", //修改
+                "--batch_size", "32", // 增大批量大小
                 "--down_sampling_layers", "3",
                 "--down_sampling_method", "avg",
                 "--down_sampling_window", "2",

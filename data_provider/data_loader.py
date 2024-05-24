@@ -883,6 +883,12 @@ class Dataset_RicePhen():
         df_raw_ts['date'] = pd.to_datetime(df_raw_ts['date'])
         # Filter out the data for February 29th
         df_raw_ts = df_raw_ts[~((df_raw_ts['date'].dt.month == 2) & (df_raw_ts['date'].dt.day == 29))]
+        missing_row = df_raw_ts[df_raw_ts.isnull().T.any()].loc[:, ['year', 'lat', 'lon']].drop_duplicates()
+        if len(missing_row) > 0:
+            for year, lat, lon in missing_row.values:
+                df_raw_ts = df_raw_ts[~((df_raw_ts['year'] == year) & (df_raw_ts['lat'] == lat) & (df_raw_ts['lon'] == lon))]
+                df_raw_target = df_raw_target[~((df_raw_target['year'] == year) & (df_raw_target['lat'] == lat) & (df_raw_target['lon'] == lon))]
+        
         
         # The number of sample points is the number of rows of df raw target
         num_train = int(len(df_raw_target) * 0.7)
