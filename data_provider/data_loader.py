@@ -870,7 +870,9 @@ class Dataset_RicePhen():
     
     # This data is sequence to event, not sequence to sequence, so it needs to be modified when reading the data.
     def __read_data__(self):
-        self.scaler = StandardScaler()
+        self.scaler = {}
+        self.scaler['ts'] = StandardScaler()
+        self.scaler['target'] = StandardScaler()
         df_raw_ts = pd.read_csv(os.path.join(self.root_path,
                                           self.data_path['ts_data']))
         df_raw_target = pd.read_csv(os.path.join(self.root_path,
@@ -916,9 +918,14 @@ class Dataset_RicePhen():
         if self.scale:
             # Normalization is performed on the training set only
             train_data_ts = data_ts[:num_train].reshape(-1, feature_dim)
-            self.scaler.fit(train_data_ts)
+            self.scaler['ts'].fit(train_data_ts)
             # The entire dataset is transformed
-            data_ts = self.scaler.transform(data_ts.reshape(-1, feature_dim)).reshape(-1, 365, feature_dim)
+            data_ts = self.scaler['ts'].transform(data_ts.reshape(-1, feature_dim)).reshape(-1, 365, feature_dim)
+            
+            train_data_target = data_target[:num_train].reshape(-1, target_dim)
+            self.scaler['target'].fit(train_data_target)
+            data_target = self.scaler['target'].transform(data_target.reshape(-1, target_dim)).reshape(-1, target_dim)
+            
         else:
             # data_ts = data_ts
             pass
